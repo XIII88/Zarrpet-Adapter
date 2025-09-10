@@ -1,0 +1,824 @@
+
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="theme-color" content="#000000" id="theme-color-meta">
+  <title>Zarrpet — OSINT / HUMINT</title>
+
+  <!-- Шрифт -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --bg:#000;
+      --card:#0b0b0b;
+      --muted:#9aa0a6;
+      --accent:#1e90ff;
+      --border:#1f1f1f;
+      --glass: rgba(255,255,255,0.02);
+      --text:#e6eef6;
+      --secondary-bg: #070708;
+      --shadow: rgba(0,0,0,0.35);
+      --touch-size: 48px;
+       /* Переменные для боковой панели */
+      --ibp-width-collapsed: 64px;
+      --ibp-width-expanded: 220px;
+    }
+    [data-theme="light"]{
+      --bg: #f6f8fb;
+      --card: #ffffff;
+      --muted: #55606a;
+      --accent: #0b76ff;
+      --border: #e6edf6;
+      --glass: rgba(2,6,23,0.03);
+      --text: #071421;
+      --secondary-bg: #ffffff;
+      --shadow: rgba(9,30,46,0.06);
+      --touch-size: 48px;
+    }
+
+    /* Плавный переход цветов */
+    body, .card, .contact, .hero {
+      transition: background-color .20s ease, color .20s ease, border-color .20s ease, box-shadow .20s ease;
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:"Poppins",system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial;
+      background:var(--bg);
+      color:var(--text);
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+      line-height:1.35;
+      -webkit-tap-highlight-color: rgba(0,0,0,0);
+      /* Отступ для боковой панели */
+      padding-left: var(--ibp-width-collapsed);
+      transition: padding-left 260ms cubic-bezier(.2,.9,.3,1);
+    }
+    
+    /* Отступ для контента, когда панель раскрыта */
+    body.ibp-sidebar-is-expanded {
+        padding-left: var(--ibp-width-expanded);
+    }
+    
+    /* На мобильных панель накладывается поверх контента */
+    @media (max-width: 768px) {
+        body, body.ibp-sidebar-is-expanded {
+            padding-left: 0;
+        }
+    }
+
+
+    /* Hero */
+    .hero{
+      min-height:72vh;
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      align-items:center;
+      text-align:center;
+      padding:36px 18px;
+      position:relative;
+      background: linear-gradient(180deg, transparent, rgba(0,0,0,0.03));
+    }
+    .title{
+      font-weight:800;
+      font-size:clamp(36px,10.5vw,88px);
+      color:var(--accent);
+      letter-spacing:0.02em;
+      margin:0;
+      line-height:0.95;
+      text-shadow:0 6px 22px rgba(30,144,255,0.10);
+    }
+    .subtitle{
+      font-size:clamp(16px,4vw,28px);
+      margin-top:10px;
+      color:var(--text);
+      font-weight:600;
+    }
+    .tagline{
+      margin-top:10px;
+      font-size:13px;
+      color:var(--muted);
+      font-weight:300;
+    }
+
+    /* Theme toggle (верхний правый угол) — touch friendly */
+    .theme-toggle {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      display:flex;
+      align-items:center;
+      gap:10px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      padding:8px 10px;
+      border-radius:14px;
+      box-shadow: 0 6px 18px var(--shadow);
+      cursor: pointer;
+      user-select: none;
+      min-height: var(--touch-size);
+      min-width: var(--touch-size);
+    }
+    .theme-toggle:focus { outline: 3px solid rgba(11,118,255,0.14); outline-offset: 3px; }
+    .toggle-icon {
+      width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:10px;
+      background:var(--glass);
+      flex: 0 0 40px;
+    }
+    .toggle-label { font-size:13px; color:var(--muted); font-weight:600; padding-right:6px; white-space:nowrap; }
+
+    /* Arrow */
+    .down-arrow{
+      position:absolute;
+      bottom:14px;
+      left:50%;
+      transform:translateX(-50%);
+      width:44px;height:44px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      color:var(--muted);
+      cursor:pointer;
+      opacity:0.95;
+      transition:transform .18s ease;
+      border-radius:10px;
+      background:var(--card);
+      border:1px solid var(--border);
+      box-shadow: 0 6px 20px var(--shadow);
+    }
+    .down-arrow:hover{transform:translateX(-50%) translateY(6px)}
+    .arrow-svg{width:18px;height:18px;fill:var(--muted)}
+
+    /* Sections */
+    .section{
+      padding:42px 16px;
+      max-width:1000px;
+      margin:0 auto;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap:16px;
+    }
+    @media (max-width:760px){ .grid{grid-template-columns:1fr} }
+
+    .card{
+      background:var(--card);
+      border:1px solid var(--border);
+      padding:16px;
+      border-radius:12px;
+      display:flex;
+      gap:14px;
+      align-items:center;
+      min-height:110px;
+      box-shadow:0 10px 30px var(--shadow);
+    }
+    /* Mobile: stack icon above content */
+    @media (max-width:540px){
+      .card{
+        flex-direction:column;
+        align-items:center;
+        text-align:center;
+        padding:14px;
+      }
+      .card .icon{margin-bottom:6px}
+    }
+    .card.full{grid-column:1/-1; padding:18px;}
+    .card .icon{
+      width:56px;
+      height:56px;
+      flex:0 0 56px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background:var(--glass);
+      border-radius:10px;
+      overflow:hidden;
+    }
+    .card h3{margin:0;font-size:17px;color:var(--text)}
+    .card p{margin:8px 0 12px;color:var(--muted);font-size:14px}
+    .card .controls{margin-top:auto}
+    .btn{
+      display:inline-block;
+      background:var(--accent);
+      color:#001423;
+      font-weight:700;
+      padding:10px 14px;
+      border-radius:10px;
+      text-decoration:none;
+      border:0;
+      cursor:pointer;
+      transition:transform .12s ease, box-shadow .12s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn:hover{transform:translateY(-3px); box-shadow:0 8px 28px rgba(11,118,255,0.12)}
+    /* На мобильных — кнопки полноширинные и удобные */
+    @media (max-width:540px){
+      .btn{display:block;width:100%;box-sizing:border-box;padding:12px 14px;font-size:16px;border-radius:12px}
+    }
+    .small-note{font-size:12px;color:var(--muted)}
+
+    /* Контакт секция */
+    .contact{
+      background:linear-gradient(180deg, rgba(30,30,30,0.02), rgba(10,10,10,0.02));
+      border:1px solid rgba(255,255,255,0.02);
+      padding:18px;
+      border-radius:12px;
+      display:flex;
+      gap:14px;
+      align-items:center;
+      justify-content:space-between;
+      flex-wrap:wrap;
+      box-shadow:0 10px 30px var(--shadow);
+    }
+    .contact .left{display:flex;gap:12px;align-items:center}
+    .contact .left h3{margin:0;font-size:20px;color:var(--text)}
+    .contact .left p{margin:0;color:var(--muted);font-size:13px}
+    .contact .right{display:flex;align-items:center;gap:12px}
+    .contact .big-telegram{font-size:22px;font-weight:800;color:var(--accent)}
+    .contact .right .btn{padding:10px 16px}
+
+    /* На совсем маленьких экранах — центрируем и стэкуем */
+    @media (max-width:480px){
+      .hero{min-height:62vh;padding:22px 12px}
+      .title{font-size:44px}
+      .subtitle{font-size:18px}
+      .theme-toggle{top:10px;right:10px;padding:8px;border-radius:12px;box-shadow:none}
+      .down-arrow{bottom:10px;box-shadow:none}
+      .contact{flex-direction:column;align-items:center;text-align:center}
+      .contact .right{width:100%;justify-content:center}
+      .card{box-shadow:none;border-radius:10px}
+      .card .icon{width:64px;height:64px}
+    }
+
+    footer{padding:20px 12px;text-align:center;color:var(--muted);font-size:13px}
+    
+    /* Стили для модального окна профиля */
+    .profile-modal {
+      display: none;
+      position: fixed;
+      z-index: 10000;
+      padding-top: 10vh;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background-color: rgba(0,0,0,0.85);
+      -webkit-backdrop-filter: blur(8px);
+      backdrop-filter: blur(8px);
+    }
+    .profile-modal-content {
+      margin: auto;
+      display: block;
+      width: 80%;
+      max-width: 400px;
+      border-radius: 12px;
+      border: 2px solid var(--border);
+      animation: zoomIn 0.3s ease;
+    }
+     @keyframes zoomIn {
+      from {transform: scale(0.8); opacity: 0;}
+      to {transform: scale(1); opacity: 1;}
+    }
+    #profileModalCaption {
+      margin: 10px auto;
+      display: block;
+      width: 80%;
+      max-width: 700px;
+      text-align: center;
+      color: #ccc;
+      padding: 10px 0;
+    }
+    .profile-modal-close {
+      position: absolute;
+      top: 15px;
+      right: 35px;
+      color: #f1f1f1;
+      font-size: 40px;
+      font-weight: bold;
+      transition: 0.3s;
+      cursor: pointer;
+      line-height: 1;
+    }
+    .profile-modal-close:hover,
+    .profile-modal-close:focus {
+      color: #bbb;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <section class="hero" id="top">
+      <div class="theme-toggle" id="themeToggle" role="switch" aria-checked="false" tabindex="0" aria-label="Переключить тему">
+        <div class="toggle-icon" id="toggleIcon" aria-hidden="true">
+          <svg id="iconMoon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" fill="currentColor"/>
+          </svg>
+        </div>
+        <div class="toggle-label" id="toggleLabel">Тема</div>
+      </div>
+
+      <h1 class="title">Zarrpet</h1>
+      <div class="subtitle">Zarrpet — OSINT, HUMINT</div>
+      <div class="tagline">Учусь учу и делаю мыслями</div>
+
+      <div class="down-arrow" id="scrollDown" role="button" aria-label="Прокрутить вниз">
+        <svg class="arrow-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M12 16.5c-.2 0-.4-.1-.6-.2l-6.8-6.1c-.5-.4-.6-1.1-.2-1.6.4-.5 1.1-.6 1.6-.2L12 13.1l7-4.6c.5-.3 1.2-.2 1.6.3.3.5.2 1.2-.3 1.6l-6.8 6.1c-.2.1-.4.2-.6.2z"/>
+        </svg>
+      </div>
+    </section>
+
+    <section class="section" id="links">
+      <div class="grid">
+        <article class="card">
+          <div class="icon" aria-hidden="true">
+            <svg width="36" height="36" viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg">
+              <path fill="#1DA1F2" d="M120 0C53.7 0 0 53.7 0 120s53.7 120 120 120 120-53.7 120-120S186.3 0 120 0z"/>
+              <path fill="#fff" d="M183.6 69.8l-22.6 107.3c-1.7 7.2-6.2 9-12.5 5.6l-34.6-25.5-16.7 16.1c-1.8 1.8-3.3 3.3-6.6 3.3l2.4-34.6L151 86.1c3.6-2.9-.8-4.5-5.6-1.6L73.4 128.8 42.1 116.5c-7.4-2.7-7.6-7.4 1.5-11.1L170 63.1c6.6-2.5 12.4 1.6 13.6 6.7z"/>
+            </svg>
+          </div>
+          <div style="flex:1">
+            <h3>Канал в Telegram</h3>
+            <p>основной канал с публикациями, отчетами, досье и прочим контентом.</p>
+            <div class="controls">
+              <a class="btn" href="https://t.me/+22aIKkO-BqYyYjli" target="_blank" rel="noopener noreferrer" aria-label="Перейти в канал">Перейти</a>
+            </div>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="icon" aria-hidden="true">
+            <svg width="36" height="36" viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg">
+              <path fill="#1DA1F2" d="M120 0C53.7 0 0 53.7 0 120s53.7 120 120 120 120-53.7 120-120S186.3 0 120 0z"/>
+              <path fill="#fff" d="M183.6 69.8l-22.6 107.3c-1.7 7.2-6.2 9-12.5 5.6l-34.6-25.5-16.7 16.1c-1.8 1.8-3.3 3.3-6.6 3.3l2.4-34.6L151 86.1c3.6-2.9-.8-4.5-5.6-1.6L73.4 128.8 42.1 116.5c-7.4-2.7-7.6-7.4 1.5-11.1L170 63.1c6.6-2.5 12.4 1.6 13.6 6.7z"/>
+            </svg>
+          </div>
+          <div style="flex:1">
+            <h3>Наш чат</h3>
+            <p>Обсуждения на разные темы. Присоединяйся в наше сообщество.</p>
+            <div class="controls">
+              <a class="btn" href="https://t.me/+jQ2bO97mgoA0M2Iy" target="_blank" rel="noopener noreferrer" aria-label="Присоединиться в чат">Присоединиться</a>
+            </div>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="icon" aria-hidden="true">
+            <svg width="36" height="36" viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg">
+              <path fill="#1DA1F2" d="M120 0C53.7 0 0 53.7 0 120s53.7 120 120 120 120-53.7 120-120S186.3 0 120 0z"/>
+              <path fill="#fff" d="M183.6 69.8l-22.6 107.3c-1.7 7.2-6.2 9-12.5 5.6l-34.6-25.5-16.7 16.1c-1.8 1.8-3.3 3.3-6.6 3.3l2.4-34.6L151 86.1c3.6-2.9-.8-4.5-5.6-1.6L73.4 128.8 42.1 116.5c-7.4-2.7-7.6-7.4 1.5-11.1L170 63.1c6.6-2.5 12.4 1.6 13.6 6.7z"/>
+            </svg>
+          </div>
+          <div style="flex:1">
+            <h3>Adapter</h3>
+            <p>Ставь реакции на адаптер и не пропускай новые ворки.</p>
+            <div class="controls">
+              <a class="btn" href="https://t.me/ZarrpetAdapter" target="_blank" rel="noopener noreferrer" aria-label="Подписаться на адаптер">Подписаться</a>
+            </div>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="icon" aria-hidden="true">
+            <svg width="36" height="36" viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg">
+              <path fill="#1DA1F2" d="M120 0C53.7 0 0 53.7 0 120s53.7 120 120 120 120-53.7 120-120S186.3 0 120 0z"/>
+              <path fill="#fff" d="M183.6 69.8l-22.6 107.3c-1.7 7.2-6.2 9-12.5 5.6l-34.6-25.5-16.7 16.1c-1.8 1.8-3.3 3.3-6.6 3.3l2.4-34.6L151 86.1c3.6-2.9-.8-4.5-5.6-1.6L73.4 128.8 42.1 116.5c-7.4-2.7-7.6-7.4 1.5-11.1L170 63.1c6.6-2.5 12.4 1.6 13.6 6.7z"/>
+            </svg>
+          </div>
+          <div style="flex:1">
+            <h3>Список Услуг</h3>
+            <p>Информация о предоставляемых услугах. Узнайте все детали и о наших возможностях.</p>
+            <div class="controls">
+              <a class="btn" href="http://poisonprice_bot.t.me/" target="_blank" rel="noopener noreferrer" aria-label="Узнать больше о услугах">Узнать больше</a>
+            </div>
+          </div>
+        </article>
+
+        <article class="card full">
+          <div style="display:flex;gap:14px;align-items:flex-start;width:100%;flex-wrap:wrap">
+            <div class="icon" aria-hidden="true">
+              <svg width="42" height="42" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path fill="#1DA1F2" d="M12 0C5.372 0 0 5.372 0 12s5.372 12 12 12 12-5.372 12-12S18.628 0 12 0z"/>
+                <path fill="#fff" d="M17 8.5 11.5 12 7 10.5l10-6z"/>
+              </svg>
+            </div>
+            <div style="flex:1;min-width:180px">
+              <h3>Приватка</h3>
+              <p>Это мой личный приват канал. В нем есть все необходимые инструмента для osint и humint.</p>
+              <div class="controls">
+                <a class="btn" href="https://t.me/+jKzxTlUOAAJiYTA8" target="_blank" rel="noopener noreferrer" aria-label="Подать заявку в приватку">Подать Заявку</a>
+              </div>
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="section" id="contact">
+      <div class="contact" role="region" aria-labelledby="contactTitle">
+        <div class="left">
+          <div style="width:56px;height:56px;display:flex;align-items:center;justify-content:center;background:var(--glass);border-radius:10px">
+            <svg width="30" height="30" viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg">
+              <path fill="#1DA1F2" d="M120 0C53.7 0 0 53.7 0 120s53.7 120 120 120 120-53.7 120-120S186.3 0 120 0z"/>
+              <path fill="#fff" d="M183.6 69.8l-22.6 107.3c-1.7 7.2-6.2 9-12.5 5.6l-34.6-25.5-16.7 16.1c-1.8 1.8-3.3 3.3-6.6 3.3l2.4-34.6L151 86.1c3.6-2.9-.8-4.5-5.6-1.6L73.4 128.8 42.1 116.5c-7.4-2.7-7.6-7.4 1.5-11.1L170 63.1c6.6-2.5 12.4 1.6 13.6 6.7z"/>
+            </svg>
+          </div>
+          <div>
+            <h3 id="contactTitle">Свяжитесь с нами</h3>
+            <p class="small-note">Для обращения используйте Telegram</p>
+          </div>
+        </div>
+
+        <div class="right">
+          <div style="display:flex;align-items:center;gap:10px">
+            <div class="big-telegram">Telegram</div>
+          </div>
+          <div style="text-align:right">
+            <div class="small-note">Написать напрямую в telegram основателю проекта</div>
+            <div style="margin-top:8px">
+              <a class="btn" href="https://osintmarker.t.me" target="_blank" rel="noopener noreferrer" aria-label="Связаться с основателем">Связаться</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      © Zarrpet — Все ссылки ведут в Telegram. Открываются в новой вкладке.
+    </footer>
+    
+     <!-- Модальное окно для профиля. Вставьте вашу ссылку на фото в атрибут src -->
+    <div id="profileModal" class="profile-modal">
+      <span class="profile-modal-close" id="profileModalClose" title="Закрыть">&times;</span>
+      <img class="profile-modal-content" id="profileImage" src="https://placehold.co/400x400/0b0b0b/e6eef6?text=Ваше+Фото" alt="Фото профиля">
+      <div id="profileModalCaption">Ваш профиль</div>
+    </div>
+
+  </main>
+
+  <script>
+    (function() {
+      const THEME_KEY = 'theme'; // 'dark' | 'light'
+      const root = document.documentElement;
+      const toggle = document.getElementById('themeToggle');
+      const toggleLabel = document.getElementById('toggleLabel');
+      const toggleIconWrap = document.getElementById('toggleIcon');
+      const themeMeta = document.getElementById('theme-color-meta');
+
+      const sunSVG = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6.76 4.84l-1.8-1.79L3.17 4.84 4.96 6.63 6.76 4.84zM1 13h3v-2H1v2zm10 9h2v-3h-2v3zM17.24 19.16l1.8 1.79 1.79-1.79-1.8-1.79-1.79 1.79zM20 11v2h3v-2h-3zM4.22 17.66l-1.79 1.79 1.79 1.79 1.79-1.79-1.79-1.79zM11 4V1H9v3h2zm0 6a5 5 0 100 10 5 5 0 000-10z" fill="currentColor"/></svg>';
+      const moonSVG = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" fill="currentColor"/></svg>';
+
+      function getInitialTheme() {
+        const stored = localStorage.getItem(THEME_KEY);
+        if (stored === 'light' || stored === 'dark') return stored;
+        const prefersLight = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches;
+        return prefersLight ? 'light' : 'dark';
+      }
+
+      function updateMetaColor(theme) {
+        // Подставляем приятный цвет для chrome на android
+        if (!themeMeta) return;
+        themeMeta.content = (theme === 'light') ? '#f6f8fb' : '#000000';
+      }
+
+      function applyTheme(theme, save=true) {
+        if (theme === 'light') {
+          root.setAttribute('data-theme', 'light');
+          toggle.setAttribute('aria-checked', 'true');
+          toggleLabel.textContent = 'Светлая';
+          toggleIconWrap.innerHTML = sunSVG;
+        } else {
+          root.setAttribute('data-theme', 'dark');
+          toggle.setAttribute('aria-checked', 'false');
+          toggleLabel.textContent = 'Тёмная';
+          toggleIconWrap.innerHTML = moonSVG;
+        }
+        updateMetaColor(theme);
+        if (save) localStorage.setItem(THEME_KEY, theme);
+      }
+
+      function toggleTheme() {
+        const current = root.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
+        const next = current === 'light' ? 'dark' : 'light';
+        applyTheme(next, true);
+      }
+
+      const initial = getInitialTheme();
+      applyTheme(initial, false);
+
+      const mql = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)');
+      function systemChangeHandler(e) {
+        const stored = localStorage.getItem(THEME_KEY);
+        if (stored === 'light' || stored === 'dark') return;
+        const newTheme = e.matches ? 'light' : 'dark';
+        applyTheme(newTheme, false);
+      }
+      if (mql && typeof mql.addEventListener === 'function') {
+        mql.addEventListener('change', systemChangeHandler);
+      } else if (mql && typeof mql.addListener === 'function') {
+        mql.addListener(systemChangeHandler);
+      }
+
+      toggle.addEventListener('click', toggleTheme);
+      toggle.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          toggleTheme();
+        }
+      });
+
+      document.getElementById('scrollDown').addEventListener('click', function(){
+        document.getElementById('links').scrollIntoView({behavior:'smooth'});
+      });
+
+      // Улучшение UX: при нажатии на кнопки на мобильных устройствах — небольшая вибрация (если доступно)
+      function maybeVibrate() {
+        if (navigator.vibrate) navigator.vibrate(8);
+      }
+      document.querySelectorAll('.btn, .theme-toggle, .down-arrow').forEach(el => {
+        el.addEventListener('touchstart', maybeVibrate, {passive:true});
+      });
+    })();
+  </script>
+</body>
+<!-- BEGIN: Interactive Black-Blue Panel (paste before </body>) -->
+<style>
+  :root{
+    /* Переменные вынесены в основной блок :root */
+    --ibp-bg-dark: #07101a;
+    --ibp-blue: #0f4c81;
+    --ibp-accent: #1da1f2;
+    --ibp-text: #e6f2ff;
+    --ibp-focus: #ffd54a;
+  }
+  /* Scoped panel */
+  .ibp-sidebar{
+    position: fixed;
+    left: 0;
+    top: 0;
+    height: 100vh;
+    width: var(--ibp-width-collapsed);
+    background: linear-gradient(180deg, var(--ibp-bg-dark), #071a2a);
+    border-right: 1px solid rgba(255,255,255,0.04);
+    padding: 12px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+    transition: width 260ms cubic-bezier(.2,.9,.3,1), box-shadow 200ms;
+    z-index: 9999;
+  }
+  .ibp-sidebar.ibp-expanded{
+    width: var(--ibp-width-expanded);
+    box-shadow: 8px 0 24px rgba(2,6,23,0.6);
+  }
+  .ibp-toggle{
+    width:48px;
+    height:48px;
+    border-radius:10px;
+    background: linear-gradient(180deg, rgba(15,76,129,0.12), rgba(15,76,129,0.06));
+    border:1px solid rgba(255,255,255,0.04);
+    display: inline-grid;
+    place-items: center;
+    cursor: pointer;
+    color: var(--ibp-text);
+    transition: transform 200ms ease, background 160ms;
+  }
+  .ibp-toggle:hover{ transform: translateX(2px); }
+  .ibp-arrow{ width:18px; height:18px; transition: transform 220ms ease; }
+  .ibp-sidebar.ibp-expanded .ibp-arrow{ transform: rotate(180deg); }
+
+  .ibp-list-wrap{ width:100%; overflow: hidden; }
+  .ibp-list{
+    display:flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 8px 0;
+    box-sizing: border-box;
+    transform: translateX(-10px);
+    opacity: 0;
+    pointer-events: none;
+    transition: transform 300ms cubic-bezier(.2,.9,.3,1) 50ms, opacity 220ms ease;
+  }
+  .ibp-sidebar.ibp-expanded .ibp-list{
+    transform: translateX(0);
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .ibp-btn{
+    display:flex;
+    align-items:center;
+    gap: 12px;
+    width:100%;
+    padding: 10px 12px;
+    border-radius:10px;
+    background: transparent;
+    border:1px solid transparent;
+    color: var(--ibp-text);
+    cursor: pointer;
+    text-align: left;
+    transition: background 140ms, transform 120ms;
+    font: 14px/1.0 "Poppins", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  }
+  .ibp-btn:hover{ transform: translateX(4px); background: linear-gradient(90deg, rgba(15,76,129,0.12), rgba(15,76,129,0.06)); }
+  .ibp-icon{
+    width:40px;height:40px;flex:0 0 40px;border-radius:8px;display:grid;place-items:center;color:#fff;
+    background: linear-gradient(180deg,#0f4c81,#06283a);
+    box-shadow: inset 0 -2px 6px rgba(0,0,0,0.25);
+  }
+  .ibp-label{ font-size: 0.95rem; color: var(--ibp-text); white-space: nowrap; }
+
+  /* focus */
+  .ibp-toggle:focus-visible, .ibp-btn:focus-visible{
+    outline: 2px solid var(--ibp-focus); outline-offset: 2px; border-radius:8px;
+  }
+
+  /* helper */
+  .ibp-footer{ margin-top: auto; font-size:12px; color: rgba(230,242,255,0.6); padding: 4px 6px; white-space: nowrap; }
+
+  /* visually hidden (screen reader) */
+  .ibp-visually-hidden{ position:absolute!important;height:1px;width:1px;overflow:hidden;clip:rect(1px,1px,1px,1px);white-space:nowrap;border:0;padding:0;margin:-1px; }
+
+  @media (max-width:420px){
+    :root{ --ibp-width-expanded: 180px; }
+  }
+</style>
+
+<aside id="ibp-sidebar" class="ibp-sidebar" aria-labelledby="ibp-title">
+  <button id="ibp-toggle" class="ibp-toggle" aria-expanded="false" aria-controls="ibp-list" aria-label="Открыть панель">
+    <svg class="ibp-arrow" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M8 5l8 7-8 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </button>
+
+  <div class="ibp-list-wrap" role="region" aria-labelledby="ibp-title">
+    <h2 id="ibp-title" class="ibp-visually-hidden">Панель навигации</h2>
+
+    <div id="ibp-list" class="ibp-list" role="list" aria-live="polite">
+      <!-- 1 -->
+      <button class="ibp-btn" role="listitem" data-action="logo-home" aria-label="Главная">
+        <div class="ibp-icon" aria-hidden="true">
+          <!-- home svg -->
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <path d="M3 11.5L12 4l9 7.5" stroke="rgba(255,255,255,0.9)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M5 11.5v7a1 1 0 0 0 1 1h3v-5h6v5h3a1 1 0 0 0 1-1v-7" stroke="rgba(255,255,255,0.9)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div class="ibp-label">Главная</div>
+      </button>
+
+      <!-- 2 -->
+      <button class="ibp-btn" role="listitem" data-action="logo-chat" aria-label="Чат">
+        <div class="ibp-icon" style="background: linear-gradient(180deg,#1b6fb3,#06314c);" aria-hidden="true">
+          <!-- chat svg -->
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke="rgba(255,255,255,0.95)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div class="ibp-label">Чат</div>
+      </button>
+
+      <!-- 3 -->
+      <button class="ibp-btn" role="listitem" data-action="logo-user" aria-label="Профиль">
+        <div class="ibp-icon" style="background: linear-gradient(180deg,#0f76a1,#04283f);" aria-hidden="true">
+          <!-- user svg -->
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8z" stroke="rgba(255,255,255,0.95)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M4 20a8 8 0 0 1 16 0" stroke="rgba(255,255,255,0.95)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div class="ibp-label">Профиль</div>
+      </button>
+
+      <!-- 4 -->
+      <button class="ibp-btn" role="listitem" data-action="logo-settings" aria-label="Настройки">
+        <div class="ibp-icon" style="background: linear-gradient(180deg,#145f8a,#03232b);" aria-hidden="true">
+          <!-- gear svg -->
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z" stroke="rgba(255,255,255,0.95)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M19.4 15a1 1 0 0 0 .1 1.1l.6.6a1 1 0 0 1-1.4 1.4l-.6-.6a1 1 0 0 0-1.1-.1 6.3 6.3 0 0 1-2 .6 6.3 6.3 0 0 1-2-.6 1 1 0 0 0-1.1.1l-.6.6A1 1 0 0 1 6 17.7l.6-.6a1 1 0 0 0 .1-1.1 6.3 6.3 0 0 1-.6-2 6.3 6.3 0 0 1 .6-2 1 1 0 0 0-.1-1.1L6 7.3A1 1 0 0 1 7.4 5.9l.6.6a1 1 0 0 0 1.1.1c.6-.3 1.3-.5 2-.6.7-.1 1.4-.1 2 0 .7.1 1.4.3 2 .6a1 1 0 0 0 1.1-.1l.6-.6A1 1 0 0 1 18 6.3l-.6.6a1 1 0 0 0-1.1.1 6.3 6.3 0 0 1-2 .6 6.3 6.3 0 0 1-2-.6 1 1 0 0 0-1.1.1l-.6.6A1 1 0 0 1 6 9.3l.6-.6a1 1 0 0 0 1.1-.1 6.3 6.3 0 0 1 2-.6c.7-.1 1.4-.1 2 0 .7.1 1.3.3 2 .6a1 1 0 0 0 1.1-.1l.6-.6A1 1 0 0 1 18 9.7l-.6.6a1 1 0 0 0-.1 1.1c.3.6.5 1.3.6 2 .1.7.1 1.4 0 2-.1.7-.3 1.4-.6 2z" stroke="rgba(255,255,255,0.95)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+        </div>
+        <div class="ibp-label">Настройки</div>
+      </button>
+    </div>
+  </div>
+
+  <div class="ibp-footer" aria-hidden="true">Панель</div>
+</aside>
+
+<script>
+  (function(){
+    const sidebar = document.getElementById('ibp-sidebar');
+    const toggle = document.getElementById('ibp-toggle');
+    const list = document.getElementById('ibp-list');
+
+    let expanded = false;
+    function setExpanded(val){
+      expanded = !!val;
+      if (expanded){
+        sidebar.classList.add('ibp-expanded');
+        document.body.classList.add('ibp-sidebar-is-expanded');
+        toggle.setAttribute('aria-expanded','true');
+        toggle.setAttribute('aria-label','Закрыть панель');
+      } else {
+        sidebar.classList.remove('ibp-expanded');
+        document.body.classList.remove('ibp-sidebar-is-expanded');
+        toggle.setAttribute('aria-expanded','false');
+        toggle.setAttribute('aria-label','Открыть панель');
+      }
+    }
+    setExpanded(false);
+
+    toggle.addEventListener('click', () => setExpanded(!expanded));
+    toggle.addEventListener('keydown', (e) => {
+      if (e.code === 'Enter' || e.code === 'Space') { e.preventDefault(); setExpanded(!expanded); }
+    });
+
+    // закрытие по Escape и клику вне панели
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && expanded){ setExpanded(false); toggle.focus(); }
+    });
+    document.addEventListener('click', (e) => {
+      if (!expanded) return;
+      if (!sidebar.contains(e.target)) setExpanded(false);
+    });
+
+    // --- Логика для кнопок панели ---
+    
+    // Получаем элементы модального окна
+    const profileModal = document.getElementById('profileModal');
+    const closeModal = document.getElementById('profileModalClose');
+
+    if(closeModal) {
+      closeModal.onclick = function() {
+        profileModal.style.display = "none";
+      }
+    }
+    window.onclick = function(event) {
+        if (event.target == profileModal) {
+            profileModal.style.display = "none";
+        }
+    }
+
+    // Основная функция-обработчик нажатий
+    window.handleLogoClick = function(action){
+      console.log('Нажата кнопка:', action);
+
+      switch(action) {
+        case 'logo-home':
+          // Плавная прокрутка к началу страницы
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          break;
+
+        case 'logo-chat':
+          // Открываем ссылку на Telegram в новой вкладке
+          window.open('https://t.me/+jQ2bO97mgoA0M2Iy', '_blank');
+          break;
+
+        case 'logo-user':
+          // Показываем модальное окно с фото
+           if(profileModal) profileModal.style.display = "block";
+          break;
+
+        case 'logo-settings':
+          // Кликаем по кнопке смены темы
+          document.getElementById('themeToggle').click();
+          break;
+          
+        default:
+          console.warn('Неизвестное действие:', action);
+      }
+
+      // На мобильных устройствах сворачиваем панель после нажатия
+      if (window.innerWidth < 768 && expanded) {
+          setExpanded(false);
+      }
+    };
+    
+    // Назначаем обработчик на все кнопки в панели
+    const buttons = list.querySelectorAll('.ibp-btn');
+    buttons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const action = btn.dataset.action;
+        handleLogoClick(action);
+      });
+    });
+
+  })();
+</script>
+<!-- END: Interactive Black-Blue Panel -->
+
+</html>
+
